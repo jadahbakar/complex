@@ -1,0 +1,62 @@
+version: '3'
+services:
+    postgres:
+        container_name: postgres_test
+        image: postgres:12.4-alpine
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres*124
+        ports:
+            - 5432:5432
+    nginx:
+        container_name: nginx_test
+        build: 
+            dockerfile: Dockerfile.dev
+            context: ./nginx
+        restart: always
+        ports:
+            - '3050:80'
+    redis:
+        container_name: redis_test
+        image: redis:6.0.6-alpine
+        restart: always
+        ports:
+            - 6379:6379
+    api:
+        build: 
+            dockerfile: Dockerfile.dev
+            context: ./server
+        volumes: 
+            - /app/node_modules
+            - ./server:/app
+        depends_on: 
+            - postgres
+        environment: 
+            - REDIS_HOST=redis_test
+            - REDIS_PORT=6379
+            - PGUSER=postgres
+            - PGHOST=postgres_test
+            - PGDATABASE=postgres
+            - PGPASSWORD=postgres*124
+            - PGPORT=5432
+    client:
+        build: 
+            dockerfile: Dockerfile.dev
+            context: ./client
+        volumes:
+            - /app/node_modules
+            - ./client:/app
+    worker:
+        build: 
+            dockerfile: Dockerfile.dev
+            context: ./worker
+        volumes: 
+            - /app/node_modules
+            - ./worker:/app
+        environment: 
+            - REDIS_HOST=redis_test
+            - REDIS_PORT=6379
+        depends_on: 
+            - redis
+    
+    
