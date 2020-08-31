@@ -1,0 +1,20 @@
+sudo: required
+services:
+  - docker  
+
+before_install:
+  - docker build -t jadahbakar/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run jadahbakar/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t jadahbakar/complex-client ./client
+  - docker build -t jadahbakar/complex-nginx  ./nginx
+  - docker build -t jadahbakar/complex-server ./server
+  - docker build -t jadahbakar/complex-worker ./worker
+  - echo "$DOCKER_PASSWORD" | doker login -u "$DOCKER_ID" --password-stdin
+  - docker push jadahbakar/complex-client
+  - docker push jadahbakar/complex-nginx
+  - docker push jadahbakar/complex-server
+  - docker push jadahbakar/complex-worker
